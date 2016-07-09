@@ -137,3 +137,7 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+
+# Othe ignores
+src/old_code
