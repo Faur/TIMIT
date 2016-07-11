@@ -263,55 +263,60 @@ class NeuralNetwork:
 		test_batches 		= np.zeros([num_epochs])
 		confusion_matrices  = []
 
-		while self.curr_epoch < num_epochs:
+		for epoch in range(num_epochs):
+			self.curr_epoch += 1
 			epoch_time = time.time()
 
 			# Full pass over the training set
 			for inputs, targets in iterate_minibatches(X_train, y_train, batch_size, shuffle=True):
 				for i in range(len(inputs)):
 						# TODO: this for loop should not excist
-					if isinstance(inputs[i], list):
-							# TODO: this 'isinstance should not excist'
+					if inputs[i].shape[0] == 1:
+							# TODO: this 'isinstance should not excist, fix in preprocessing'
+						# print('List')
+						# print(type(inputs[i]))
 						error, accuracy = train_fn(inputs[i], targets[i])
 					else:
+						# print('Not List')
+						# print(type(inputs[i]))
 						error, accuracy = train_fn([inputs[i]], targets[i])
 
-					train_error[self.curr_epoch] += error
-					train_accuracy[self.curr_epoch] += accuracy
-					train_batches[self.curr_epoch] += 1
+					train_error[epoch] += error
+					train_accuracy[epoch] += accuracy
+					train_batches[epoch] += 1
 
 			# Full pass over the validation set
 			for inputs, targets in iterate_minibatches(X_val, y_val, batch_size, shuffle=False):
 				for i in range(len(inputs)):
-					if isinstance(inputs[i], list):
+					if inputs[i].shape[0] == 1:
 						error, accuracy = validate_fn(inputs[i], targets[i])
 					else:
 						error, accuracy = validate_fn([inputs[i]], targets[i])
 
-					validation_error[self.curr_epoch] += error
-					validation_accuracy[self.curr_epoch] += accuracy
-					validation_batches[self.curr_epoch] += 1
+					validation_error[epoch] += error
+					validation_accuracy[epoch] += accuracy
+					validation_batches[epoch] += 1
 
 			# Full pass over the test set
 			for inputs, targets in iterate_minibatches(X_test, y_test, batch_size, shuffle=False):
 				for i in range(len(inputs)):
-					if isinstance(inputs[i], list):
+					if inputs[i].shape[0] == 1:
 						error, accuracy = validate_fn(inputs[i], targets[i])
 					else:
 						error, accuracy = validate_fn([inputs[i]], targets[i])
 
-					test_error[self.curr_epoch] += error
-					test_accuracy[self.curr_epoch] += accuracy
-					test_batches[self.curr_epoch] += 1
+					test_error[epoch] += error
+					test_accuracy[epoch] += accuracy
+					test_batches[poch] += 1
 
 
 			# Print epoch summary
-			train_epoch_error	= (100 - train_accuracy[self.curr_epoch] 
-									/ train_batches[self.curr_epoch] * 100)
-			val_epoch_error		= (100 - validation_accuracy[self.curr_epoch] 
-									/ validation_batches[self.curr_epoch] * 100)
-			test_epoch_error	= (100 - test_accuracy[self.curr_epoch] 
-									/ test_batches[self.curr_epoch] * 100)
+			train_epoch_error	= (100 - train_accuracy[epoch] 
+									/ train_batches[epoch] * 100)
+			val_epoch_error		= (100 - validation_accuracy[epoch] 
+									/ validation_batches[epoch] * 100)
+			test_epoch_error	= (100 - test_accuracy[epoch] 
+									/ test_batches[epoch] * 100)
 
 			self.network_train_info[0].append(train_epoch_error)
 			self.network_train_info[1].append(val_epoch_error)
@@ -335,22 +340,21 @@ class NeuralNetwork:
 
 
 			print("  training loss:\t{:.6f}".format(
-				train_error[self.curr_epoch] / train_batches[self.curr_epoch]), end='\t')
+				train_error[epoch] / train_batches[epoch]), end='\t')
 			print("train error:\t\t{:.6f} %".format(train_epoch_error))
 
 			print("  validation loss:\t{:.6f}".format(
-				validation_error[self.curr_epoch] / validation_batches[self.curr_epoch]), end='\t')
+				validation_error[epoch] / validation_batches[epoch]), end='\t')
 			print("validation error:\t{:.6f} %".format(val_epoch_error	))
 
 			print("  test loss:\t\t{:.6f}".format(
-				test_error[self.curr_epoch] / test_batches[self.curr_epoch]), end='\t')
+				test_error[epoch] / test_batches[epoch]), end='\t')
 			print("test error:\t\t{:.6f} %".format(test_epoch_error))
 
 			# if comput_confusion:
 			# 	confusion_matrices.append(create_confusion(X_val, y_val)[0])
 			# 	print('  Confusion matrix computed')
 			print()
-			self.curr_epoch += 1
 
 
 
