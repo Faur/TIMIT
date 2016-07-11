@@ -42,7 +42,7 @@ else:
 	print('DEBUG MODE ACTIVE: Only a reduced dataset is used.')
 
 ##### SCRIPT VARIABLES #####
-num_epochs 		= 500
+num_epochs 		= 3
 
 NUM_OUTPUT_UNITS= 61
 N_HIDDEN 		= 275
@@ -61,8 +61,7 @@ X_train, y_train, X_val, y_val, X_test, y_test = dataset
 
 ##### BUIDING MODEL #####
 print(' * Building network ...')
-RNN_network = NeuralNetwork()
-RNN_network.build_RNN(batch_size=batch_size, input_size=INPUT_SIZE, n_hidden=N_HIDDEN, 
+RNN_network = NeuralNetwork('RNN', batch_size=batch_size, input_size=INPUT_SIZE, n_hidden=N_HIDDEN, 
 	num_output_units=NUM_OUTPUT_UNITS, seed=int(time.time()), debug=False)
 
 RNN_network.load_model(model_load)

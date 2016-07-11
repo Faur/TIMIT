@@ -41,7 +41,6 @@ def iterate_minibatches(inputs, targets, batch_size, shuffle=False):
 class NeuralNetwork:
 	network = None
 	training_fn = None
-
 	best_weight, best_epoch, best_confusion = None, None, None
 	curr_weight, curr_epoch, curr_confusion = None, None, None
 
@@ -87,6 +86,20 @@ class NeuralNetwork:
 			nonlinearity=T.nnet.softmax)
 		
 		self.network = l_out
+
+	def __init__(self, architecture, **kwargs):
+		if architecture == 'RNN':
+			self.build_RNN(**kwargs)
+		else:
+			print("ERROR: Invalid argument: The valid architecture arguments are: 'RNN'")
+
+
+	# def load_network(self, network_name):
+	# 	try:
+	# 		print()
+	# 	except FileNotFoundError:
+	# 		print('File: {} not found. Nothing loaded'.format(model_name))
+
 
 	def load_model(self, model_name):
 		if self.network is not None:
