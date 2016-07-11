@@ -17,30 +17,37 @@ from RNN_tools import *
 ##### SCRIPT META VARIABLES #####
 print(' * Setting up ...')
 
-debug = True
 comput_confusion = False
 	# TODO: ATM this is not implemented
 
 
 paths = path_reader('path_toke.txt')
 output_path = os.path.join('..', 'output')
-model_save = os.path.join(output_path, 'best_model_old_data')
-# model_load = os.path.join(output_path, 'best_model.npz')
-model_load = None
-# data_path = os.path.join(paths[0], 'std_preprocess_26_ch.pkl')
-data_path = os.path.join(paths[0], 'logfbank_39.pkl')
-# data_path = os.path.join(paths[0], 'std_preprocess_26_ch_DEBUG.pkl')
 
+if 0:
+	data_path = os.path.join(paths[0], 'logfbank_39.pkl')
+	model_save = os.path.join(output_path, 'best_model_old_data')
+	model_load = os.path.join(output_path, 'best_model_old_data.npz')
+	INPUT_SIZE 		= 39
+elif 0:
+	data_path = os.path.join(paths[0], 'std_preprocess_26_ch.pkl')
+	model_load = os.path.join(output_path, 'best_model.npz')
+	model_save = os.path.join(output_path, 'best_model')
+	INPUT_SIZE 		= 26
+else:
+	data_path = os.path.join(paths[0], 'std_preprocess_26_ch_DEBUG.pkl')
+	model_load = os.path.join(output_path, 'best_model_DEBUG.npz')
+	model_save = os.path.join(output_path, 'best_model_DEBUG')
+	INPUT_SIZE 		= 26
+	print('DEBUG MODE ACTIVE: Only a reduced dataset is used.')
 
 ##### SCRIPT VARIABLES #####
 num_epochs 		= 500
 
-INPUT_SIZE 		= 39
-INPUT_SIZE 		= 26
 NUM_OUTPUT_UNITS= 61
 N_HIDDEN 		= 275
 
-LEARNING_RATE 	= 1e-4
+LEARNING_RATE 	= 1e-5
 MOMENTUM 		= 0.9
 WEIGHT_INIT 	= 0.1
 batch_size		= 1
@@ -54,22 +61,20 @@ X_train, y_train, X_val, y_val, X_test, y_test = dataset
 
 ##### BUIDING MODEL #####
 print(' * Building network ...')
-network = build_RNN(batch_size=batch_size, input_size=INPUT_SIZE, n_hidden=N_HIDDEN, 
+RNN_network = NeuralNetwork()
+RNN_network.build_RNN(batch_size=batch_size, input_size=INPUT_SIZE, n_hidden=N_HIDDEN, 
 	num_output_units=NUM_OUTPUT_UNITS, seed=int(time.time()), debug=False)
 
-if model_load:
-	load_model(model_load, network)
+RNN_network.load_model(model_load)
 
 ##### BUIDING FUNCTION #####
 print(" * Compiling functions ...")
-# output_fn, argmax_fn, accuracy_fn, train_fn, validate_fn = build_functions(network)
-training_fn = build_functions(network, LEARNING_RATE=LEARNING_RATE, MOMENTUM=MOMENTUM, debug=False)
-output_fn, argmax_fn, accuracy_fn, train_fn, validate_fn = training_fn
+RNN_network.build_functions(LEARNING_RATE=LEARNING_RATE, MOMENTUM=MOMENTUM, debug=False)
 
 
 ##### TRAINING #####
 print(" * Training ...")
-train(network, dataset, training_fn, model_save, num_epochs=num_epochs, 
+RNN_network.train(dataset, model_save, num_epochs=num_epochs, 
 	batch_size=batch_size, comput_confusion=False, debug=False)
 
 print()
