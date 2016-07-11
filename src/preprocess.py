@@ -14,9 +14,9 @@ from general_tools import *
 
 
 ##### SCRIPT META VARIABLES #####
-VERBOSE = True
-DEBUG 	= False
-debug_size = 5
+VERBOSE = False
+DEBUG 	= True
+debug_size = 15
 	# Convert only a reduced dataset
 ##### SCRIPT VARIABLES #####
 train_size = 3696
@@ -151,6 +151,10 @@ print()
 print('Creating Validation index ...')
 val_idx = random.sample(range(0, train_size), val_size)
 val_idx = [int(i) for i in val_idx]
+# ensure that the validation set isn't empty
+if DEBUG: 
+	val_idx[0] = 0
+	val_idx[1] = 1
 
 
 print('Preprocessing data ...')
