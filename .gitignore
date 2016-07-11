@@ -141,3 +141,5 @@ $RECYCLE.BIN/
 
 # Othe ignores
 src/old_code
+*.npz
+*.pkl
