@@ -41,8 +41,12 @@ def iterate_minibatches(inputs, targets, batch_size, shuffle=False):
 class NeuralNetwork:
 	network = None
 	training_fn = None
-	best_weight, best_epoch, best_confusion = None, None, None
-	curr_weight, curr_epoch, curr_confusion = None, None, None
+	best_param = None
+	best_error = 100
+	curr_epoch, best_epoch = 0, 0
+
+	network_train_info = [[], [], []]
+		# [[Train], [val], [test]]
 
 	def build_RNN(self, batch_size=1, input_size=26, n_hidden=275, num_output_units=61,
 			weight_init=0.1, activation_fn=lasagne.nonlinearities.sigmoid,
@@ -87,6 +91,7 @@ class NeuralNetwork:
 		
 		self.network = l_out
 
+
 	def __init__(self, architecture, **kwargs):
 		if architecture == 'RNN':
 			self.build_RNN(**kwargs)
@@ -94,11 +99,37 @@ class NeuralNetwork:
 			print("ERROR: Invalid argument: The valid architecture arguments are: 'RNN'")
 
 
+	# def save_network(self, network_name):
+	# 	try:
+	# 		f = open(network_name, 'wb')
+	# 		save = {
+	# 			'model_param': *L.get_all_param_values(self.network),
+	# 			'train_labels': train_labels,
+	# 			'valid_dataset': valid_dataset,
+	# 			'valid_labels': valid_labels,
+	# 			'test_dataset': test_dataset,
+	# 			'test_labels': test_labels,
+	# 			}
+	# 		cPickle.dump(save, f, cPickle.HIGHEST_PROTOCOL)
+	# 		f.close()
+	# 	except Exception as e:
+	# 		print('Unable to save data to {} : {}'.format(pickle_file, e))
+	# 		raise
+
+
 	# def load_network(self, network_name):
 	# 	try:
 	# 		print()
 	# 	except FileNotFoundError:
 	# 		print('File: {} not found. Nothing loaded'.format(model_name))
+
+	def use_best_param(self):
+		lasagne.layers.set_all_param_values(self.network, self.best_param)
+		self.curr_epoch = self.best_epoch
+		# Remove the network_train_info enries newer than self.best_epoch 
+		del self.network_train_info[0][self.best_epoch:]
+		del self.network_train_info[1][self.best_epoch:]
+		del self.network_train_info[2][self.best_epoch:]
 
 
 	def load_model(self, model_name):
@@ -197,10 +228,7 @@ class NeuralNetwork:
 	def train(self, dataset, save_name='Best_model', num_epochs=100, batch_size=1,
 		comput_confusion=False, debug=False):
 		"""Curently one batch_size=1 is supported"""
-		network_train_info = []
-			# Train
-			# val
-			# test
+
 
 		X_train, y_train, X_val, y_val, X_test, y_test = dataset
 		output_fn, argmax_fn, accuracy_fn, train_fn, validate_fn = self.training_fn
@@ -233,15 +261,9 @@ class NeuralNetwork:
 		test_error 			= np.zeros([num_epochs])
 		test_accuracy 		= np.zeros([num_epochs])
 		test_batches 		= np.zeros([num_epochs])
-
-		train_epoch_error	= np.zeros([num_epochs])
-		val_epoch_error		= np.zeros([num_epochs])
-		test_epoch_error	= np.zeros([num_epochs])
 		confusion_matrices  = []
 
-
-		best_validation_error = 100
-		for epoch in range(num_epochs):
+		while self.curr_epoch < num_epochs:
 			epoch_time = time.time()
 
 			# Full pass over the training set
@@ -254,9 +276,9 @@ class NeuralNetwork:
 					else:
 						error, accuracy = train_fn([inputs[i]], targets[i])
 
-					train_error[epoch] += error
-					train_accuracy[epoch] += accuracy
-					train_batches[epoch] += 1
+					train_error[self.curr_epoch] += error
+					train_accuracy[self.curr_epoch] += accuracy
+					train_batches[self.curr_epoch] += 1
 
 			# Full pass over the validation set
 			for inputs, targets in iterate_minibatches(X_val, y_val, batch_size, shuffle=False):
@@ -266,9 +288,9 @@ class NeuralNetwork:
 					else:
 						error, accuracy = validate_fn([inputs[i]], targets[i])
 
-					validation_error[epoch] += error
-					validation_accuracy[epoch] += accuracy
-					validation_batches[epoch] += 1
+					validation_error[self.curr_epoch] += error
+					validation_accuracy[self.curr_epoch] += accuracy
+					validation_batches[self.curr_epoch] += 1
 
 			# Full pass over the test set
 			for inputs, targets in iterate_minibatches(X_test, y_test, batch_size, shuffle=False):
@@ -278,65 +300,72 @@ class NeuralNetwork:
 					else:
 						error, accuracy = validate_fn([inputs[i]], targets[i])
 
-					test_error[epoch] += error
-					test_accuracy[epoch] += accuracy
-					test_batches[epoch] += 1
+					test_error[self.curr_epoch] += error
+					test_accuracy[self.curr_epoch] += accuracy
+					test_batches[self.curr_epoch] += 1
 
 
 			# Print epoch summary
-			train_epoch_error[epoch]= 100 - train_accuracy[epoch] / train_batches[epoch] * 100
-			val_epoch_error[epoch]	= 100 - validation_accuracy[epoch] / validation_batches[epoch] * 100
-			test_epoch_error[epoch]	= 100 - test_accuracy[epoch] / test_batches[epoch] * 100
+			train_epoch_error	= (100 - train_accuracy[self.curr_epoch] 
+									/ train_batches[self.curr_epoch] * 100)
+			val_epoch_error		= (100 - validation_accuracy[self.curr_epoch] 
+									/ validation_batches[self.curr_epoch] * 100)
+			test_epoch_error	= (100 - test_accuracy[self.curr_epoch] 
+									/ test_batches[self.curr_epoch] * 100)
+
+			self.network_train_info[0].append(train_epoch_error)
+			self.network_train_info[1].append(val_epoch_error)
+			self.network_train_info[2].append(test_epoch_error)
 
 
 			print("Epoch {} of {} took {:.3f}s".format(
-				epoch + 1, num_epochs, time.time() - epoch_time))
-			if val_epoch_error[epoch] < best_validation_error:
-				best_validation_error = val_epoch_error[epoch]
-				print("  New best model found!", end=" ")
-				if save_name is not None:
-					print("Model saved as " + save_name + '.npz')
-					self.save_model(save_name + '.npz')
-				else:
-					print()
+				self.curr_epoch + 1, num_epochs, time.time() - epoch_time))
+			if val_epoch_error < self.best_error:
+				self.best_error = val_epoch_error
+				self.best_epoch = self.curr_epoch
+				self.best_param = L.get_all_param_values(self.network)
+				print("  New best model found!")
+
+				# print("  New best model found!", end=" ")
+				# if save_name is not None:
+				# 	print("Model saved as " + save_name + '.npz')
+				# 	self.save_model(save_name + '.npz')
+				# else:
+				# 	print()
 
 
 			print("  training loss:\t{:.6f}".format(
-				train_error[epoch] / train_batches[epoch]), end='\t')
-			print("train error:\t\t{:.6f} %".format(train_epoch_error[epoch]))
+				train_error[self.curr_epoch] / train_batches[self.curr_epoch]), end='\t')
+			print("train error:\t\t{:.6f} %".format(train_epoch_error))
 
 			print("  validation loss:\t{:.6f}".format(
-				validation_error[epoch] / validation_batches[epoch]), end='\t')
-			print("validation error:\t{:.6f} %".format(val_epoch_error[epoch]))
+				validation_error[self.curr_epoch] / validation_batches[self.curr_epoch]), end='\t')
+			print("validation error:\t{:.6f} %".format(val_epoch_error	))
 
-			print("  test loss:\t\t{:.6f}".format(test_error[epoch] / test_batches[epoch]), end='\t')
-			print("test error:\t\t{:.6f} %".format(test_epoch_error[epoch]))
+			print("  test loss:\t\t{:.6f}".format(
+				test_error[self.curr_epoch] / test_batches[self.curr_epoch]), end='\t')
+			print("test error:\t\t{:.6f} %".format(test_epoch_error))
 
 			# if comput_confusion:
 			# 	confusion_matrices.append(create_confusion(X_val, y_val)[0])
 			# 	print('  Confusion matrix computed')
 			print()
-
-
-		network_train_info.append(train_epoch_error)
-		network_train_info.append(val_epoch_error)
-		network_train_info.append(test_epoch_error)
+			self.curr_epoch += 1
 
 
 
-		with open(save_name + '_var.pkl', 'wb') as cPickle_file:
-			cPickle.dump(
-			[network_train_info], 
-			cPickle_file, 
-			protocol=cPickle.HIGHEST_PROTOCOL)
+		# with open(save_name + '_var.pkl', 'wb') as cPickle_file:
+		# 	cPickle.dump(
+		# 	[network_train_info], 
+		# 	cPickle_file, 
+		# 	protocol=cPickle.HIGHEST_PROTOCOL)
 
 
-		if comput_confusion:
-			with open(save_name + '_conf.pkl', 'wb') as cPickle_file:
-				cPickle.dump(
-				[confusion_matrices], 
-				cPickle_file, 
-				protocol=cPickle.HIGHEST_PROTOCOL)
+		# if comput_confusion:
+		# 	with open(save_name + '_conf.pkl', 'wb') as cPickle_file:
+		# 		cPickle.dump(
+		# 		[confusion_matrices], 
+		# 		cPickle_file, 
+		# 		protocol=cPickle.HIGHEST_PROTOCOL)
 
-		return best_validation_error
 

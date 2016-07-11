@@ -42,7 +42,7 @@ else:
 	print('DEBUG MODE ACTIVE: Only a reduced dataset is used.')
 
 ##### SCRIPT VARIABLES #####
-num_epochs 		= 3
+num_epochs 		= 10
 
 NUM_OUTPUT_UNITS= 61
 N_HIDDEN 		= 275
@@ -74,6 +74,11 @@ RNN_network.build_functions(LEARNING_RATE=LEARNING_RATE, MOMENTUM=MOMENTUM, debu
 ##### TRAINING #####
 print(" * Training ...")
 RNN_network.train(dataset, model_save, num_epochs=num_epochs, 
+	batch_size=batch_size, comput_confusion=False, debug=False)
+
+RNN_network.use_best_param()
+
+RNN_network.train(dataset, model_save, num_epochs=num_epochs * 2, 
 	batch_size=batch_size, comput_confusion=False, debug=False)
 
 print()
