@@ -158,21 +158,8 @@ class NeuralNetwork:
 
 		network_output = L.get_output(self.network)
 
-		# Function to get the output of the network
-		output_fn = theano.function([l_in.input_var], network_output)
-		if debug:
-			l_out_val = output_fn(X)
-			print('l_out size:', end='\t');	print(l_out_val.shape, end='\t');
-			print('min/max: [{:.2f},{:.2f}]'.format(l_out_val.min(), l_out_val.max()))
-
 		# Retrieve all trainable parameters from the network
 		all_params = L.get_all_params(self.network, trainable=True)
-
-		argmax_fn = theano.function([l_in.input_var], [T.argmax(network_output, axis=1)])
-		if debug:
-			print('argmax_fn')
-			print(type(argmax_fn(X)[0]))
-			print(argmax_fn(X)[0].shape)
 
 		# loss = T.mean(lasagne.objectives.categorical_crossentropy(network_output, target_var))
 		loss = T.sum(lasagne.objectives.categorical_crossentropy(network_output, target_var))
@@ -183,21 +170,36 @@ class NeuralNetwork:
 					momentum = MOMENTUM)
 
 		# Function to determine the number of correct classifications
-		accuracy_fn = T.mean(T.eq(T.argmax(network_output, axis=1), target_var),
+		accuracy = T.mean(T.eq(T.argmax(network_output, axis=1), target_var),
 						dtype=theano.config.floatX)
 					  
+		# Function to get the output of the network
+		output_fn = theano.function([l_in.input_var], network_output, name='output_fn')
+		if debug:
+			l_out_val = output_fn(X)
+			print('l_out size:', end='\t');	print(l_out_val.shape, end='\t');
+			print('min/max: [{:.2f},{:.2f}]'.format(l_out_val.min(), l_out_val.max()))
+
+		argmax_fn = theano.function([l_in.input_var], [T.argmax(network_output, axis=1)],
+						name='argmax_fn')
+		if debug:
+			print('argmax_fn')
+			print(type(argmax_fn(X)[0]))
+			print(argmax_fn(X)[0].shape)
+
 		# Function implementing one step of gradient descent
-		train_fn = theano.function([l_in.input_var, target_var], [loss, accuracy_fn], 
-			updates=updates)
+		train_fn = theano.function([l_in.input_var, target_var], [loss, accuracy], 
+			updates=updates, name='train_fn')
 
 		# Function calculating the loss and accuracy
-		validate_fn = theano.function([l_in.input_var, target_var], [loss, accuracy_fn])
+		validate_fn = theano.function([l_in.input_var, target_var], [loss, accuracy], 
+						name='validate_fn')
 		if debug:
 			print(type(train_fn(X, Y)))
 			# print('loss: {:.3f}'.format( float(train_fn(X, Y))))
 			# print('accuracy: {:.3f}'.format( float(validate_fn(X, Y)[1]) ))
 
-		self.training_fn = output_fn, argmax_fn, accuracy_fn, train_fn, validate_fn
+		self.training_fn = output_fn, argmax_fn, train_fn, validate_fn
 
 
 	def create_confusion(self, X, y, debug=False):
@@ -231,7 +233,7 @@ class NeuralNetwork:
 
 
 		X_train, y_train, X_val, y_val, X_test, y_test = dataset
-		output_fn, argmax_fn, accuracy_fn, train_fn, validate_fn = self.training_fn
+		output_fn, argmax_fn, train_fn, validate_fn = self.training_fn
 
 		if debug:
 			print('X_train', end='\t\t')
