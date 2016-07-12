@@ -325,13 +325,15 @@ class NeuralNetwork:
 			self.network_train_info[2].append(test_epoch_error)
 
 
-			print("Epoch {} of {} took {:.3f}s".format(
-				epoch + 1, num_epochs, time.time() - epoch_time))
+			print("Epoch {} of {} took {:.3f}s.".format(
+				epoch + 1, num_epochs, time.time() - epoch_time), end=' ')
 			if val_epoch_error < self.best_error:
 				self.best_error = val_epoch_error
 				self.best_epoch = self.curr_epoch
 				self.best_param = L.get_all_param_values(self.network)
-				print("  New best model found!")
+				print("New best model found!")
+			else:
+				print()
 
 				# print("  New best model found!", end=" ")
 				# if save_name is not None:
