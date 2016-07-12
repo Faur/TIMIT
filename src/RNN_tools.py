@@ -307,7 +307,7 @@ class NeuralNetwork:
 
 					test_error[epoch] += error
 					test_accuracy[epoch] += accuracy
-					test_batches[poch] += 1
+					test_batches[epoch] += 1
 
 
 			# Print epoch summary
@@ -324,7 +324,7 @@ class NeuralNetwork:
 
 
 			print("Epoch {} of {} took {:.3f}s".format(
-				self.curr_epoch + 1, num_epochs, time.time() - epoch_time))
+				epoch + 1, num_epochs, time.time() - epoch_time))
 			if val_epoch_error < self.best_error:
 				self.best_error = val_epoch_error
 				self.best_epoch = self.curr_epoch
