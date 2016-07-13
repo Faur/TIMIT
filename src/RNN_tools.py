@@ -226,6 +226,11 @@ class NeuralNetwork:
 
 		return conf_img, y_pred, y_actu
 
+	def create_learning_curves(self):
+		pass
+
+	def visualize_training(self, learning_curves, confusion):
+		pass
 
 	def train(self, dataset, save_name='Best_model', num_epochs=100, batch_size=1,
 		comput_confusion=False, debug=False):
@@ -273,15 +278,11 @@ class NeuralNetwork:
 			for inputs, targets in iterate_minibatches(X_train, y_train, batch_size, shuffle=True):
 				for i in range(len(inputs)):
 						# TODO: this for loop should not excist
-					if inputs[i].shape[0] == 1:
-							# TODO: this 'isinstance should not excist, fix in preprocessing'
-						# print('List')
-						# print(type(inputs[i]))
-						error, accuracy = train_fn(inputs[i], targets[i])
-					else:
-						# print('Not List')
-						# print(type(inputs[i]))
-						error, accuracy = train_fn([inputs[i]], targets[i])
+
+					if debug:
+						print(type(inputs), type(targets))
+						print(type(inputs[i]), type(targets[i]))
+					error, accuracy = train_fn([inputs[i]], targets[i])
 
 					train_error[epoch] += error
 					train_accuracy[epoch] += accuracy
@@ -290,10 +291,7 @@ class NeuralNetwork:
 			# Full pass over the validation set
 			for inputs, targets in iterate_minibatches(X_val, y_val, batch_size, shuffle=False):
 				for i in range(len(inputs)):
-					if inputs[i].shape[0] == 1:
-						error, accuracy = validate_fn(inputs[i], targets[i])
-					else:
-						error, accuracy = validate_fn([inputs[i]], targets[i])
+					error, accuracy = validate_fn([inputs[i]], targets[i])
 
 					validation_error[epoch] += error
 					validation_accuracy[epoch] += accuracy
@@ -302,10 +300,7 @@ class NeuralNetwork:
 			# Full pass over the test set
 			for inputs, targets in iterate_minibatches(X_test, y_test, batch_size, shuffle=False):
 				for i in range(len(inputs)):
-					if inputs[i].shape[0] == 1:
-						error, accuracy = validate_fn(inputs[i], targets[i])
-					else:
-						error, accuracy = validate_fn([inputs[i]], targets[i])
+					error, accuracy = validate_fn([inputs[i]], targets[i])
 
 					test_error[epoch] += error
 					test_accuracy[epoch] += accuracy
