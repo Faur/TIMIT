@@ -18,7 +18,7 @@ import features
 ##### SCRIPT META VARIABLES #####
 VERBOSE = True
 DEBUG 	= True
-debug_size = 15
+debug_size = 5
 	# Convert only a reduced dataset
 
 ##### SCRIPT VARIABLES #####
@@ -109,7 +109,7 @@ def preprocess_dataset(source_path, VERBOSE=False, visualize=False):
 
 
 			if visualize:
-				curr_fig = plt.figure(i)
+				curr_fig 	= plt.figure(i)
 				wav_file 	= wave.open(wav_fname, 'r')
 				signal 		= wav_file.readframes(-1)
 				signal 		= np.fromstring(signal, 'Int16')
@@ -231,13 +231,13 @@ if DEBUG:
 
 print('Preprocessing data ...')
 print('  This will take a while')
-X_train_all, y_train_all, train_fig 	= preprocess_dataset(train_source_path, 
+X_train_all, y_train_all, train_figs 	= preprocess_dataset(train_source_path, 
 											VERBOSE=False, visualize=False)
-X_test, y_test, train_fig 				= preprocess_dataset(test_source_path, 
+X_test, y_test, test_figs 				= preprocess_dataset(test_source_path, 
 											VERBOSE=False, visualize=True)
-print('  Preprocessing complete')
+# figs = list(map(plt.figure, plt.get_fignums()))
 
-
+print('  Preprocessing changesomplete')
 
 if VERBOSE:
 	print()
@@ -310,7 +310,9 @@ def calc_norm_param(X, VERBOSE=False):
 	return mean_val, std_val, total_len
 
 def normalize(X, mean_val, std_val):
-	return (X - mean_val)/std_val
+	for i in range(len(X)):
+		X[i] = (X[i] - mean_val)/std_val
+	return X
 
 
 mean_val, std_val, _ = calc_norm_param(X_train)
