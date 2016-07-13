@@ -13,17 +13,17 @@ import features
 	# https://github.com/jameslyons/python_speech_features
 
 
-
-
 ##### SCRIPT META VARIABLES #####
 VERBOSE = True
-DEBUG 	= True
+DEBUG 	= False
 debug_size = 5
 	# Convert only a reduced dataset
+visualize = False
 
 ##### SCRIPT VARIABLES #####
-train_size = 3696
-val_size = 184
+train_size 	= 3696
+val_size 	= 184
+test_size 	= 1344
 
 data_type = 'float32'
 
@@ -95,12 +95,10 @@ def calc_norm_param(X, VERBOSE=False):
 	std_val = np.zeros(X[0].shape[1])
 	for obs in X:
 		obs_len = obs.shape[0]
-		print('len', obs_len)
 		mean_val += np.mean(obs,axis=0)*obs_len
 		std_val += np.std(obs, axis=0)*obs_len
 		total_len += obs_len
 	
-	print('total len', total_len)
 	mean_val /= total_len
 	std_val /= total_len
 
@@ -239,12 +237,14 @@ def preprocess_dataset(source_path, VERBOSE=False, visualize=False):
 				print('type(X_val): \t\t {}'.format(type(X_val)))
 				print('X_val.shape: \t\t {}'.format(X_val.shape))
 				print('type(X_val[0][0]):\t {}'.format(type(X_val[0][0])))
-
+			else:
+				print(i, end=' ', flush=True)
 			if i >= debug_size and DEBUG:
 				break
 
 		if i >= debug_size and DEBUG:
 			break
+	print()
 	return X, Y, fig
 
 
@@ -262,10 +262,10 @@ if DEBUG:
 
 print('Preprocessing data ...')
 print('  This will take a while')
-X_train_all, y_train_all, train_figs 	= preprocess_dataset(train_source_path, 
+X_train_all, y_train_all, _ 	= preprocess_dataset(train_source_path, 
 											VERBOSE=False, visualize=False)
 X_test, y_test, test_figs 				= preprocess_dataset(test_source_path, 
-											VERBOSE=False, visualize=True)
+											VERBOSE=False, visualize=visualize)
 # figs = list(map(plt.figure, plt.get_fignums()))
 
 print('  Preprocessing changesomplete')
@@ -321,7 +321,33 @@ X_train = normalize(X_train, mean_val, std_val)
 X_val 	= normalize(X_val, mean_val, std_val)
 X_test 	= normalize(X_test, mean_val, std_val)
 
+if visualize == True:
+	for i in range(debug_size):
+		plt.figure(i)
+		plt.subplot(4,1,4)
+
+		plt.imshow(X_test[i].T, interpolation='nearest', aspect='auto')
+		# plt.axis('off')
+		# plt.title('Preprocessed data')
+
+		plt.ylabel('Normalized data')
+		plt.tick_params(
+			axis='both',       	# changes apply to the axis
+			which='both',      	# both major and minor ticks are affected
+			bottom='off',      	# ticks along the bottom 
+			top='off',         	# ticks along the top 
+			right='off',      	# ticks along the right 
+			left='off',      	# ticks along the left
+			labelbottom='off', 	# labels along the bottom
+			labelleft='off')		# labels along the top
+
+	plt.show()
+
+
+
+
 print('Saving data ...')
+print('   ', target_path)
 with open(target_path + '.pkl', 'wb') as cPickle_file:
     cPickle.dump(
         [X_train, y_train, X_val, y_val, X_test, y_test], 
