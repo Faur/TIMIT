@@ -93,6 +93,8 @@ def preprocess_dataset(source_path, VERBOSE=False, visualize=False):
 	i = 0
 	X = []
 	Y = []
+	fig = []
+	num_plot = 4
 
 	for dirName, subdirList, fileList in os.walk(source_path):
 		for fname in fileList:
@@ -107,6 +109,7 @@ def preprocess_dataset(source_path, VERBOSE=False, visualize=False):
 
 
 			if visualize:
+				curr_fig = plt.figure(i)
 				wav_file 	= wave.open(wav_fname, 'r')
 				signal 		= wav_file.readframes(-1)
 				signal 		= np.fromstring(signal, 'Int16')
@@ -116,7 +119,7 @@ def preprocess_dataset(source_path, VERBOSE=False, visualize=False):
 					print('ONLY MONO FILES')
 
 				x_axis 	= np.linspace(0, len(signal)/frame_rate, num=len(signal))
-				ax1 	= plt.subplot(3,1,1)
+				ax1 	= plt.subplot(num_plot,1,1)
 				# plt.title('Original wave data')
 				plt.plot(x_axis, signal)
 				ax1.set_xlim([0, len(signal)/frame_rate])
@@ -141,7 +144,7 @@ def preprocess_dataset(source_path, VERBOSE=False, visualize=False):
 
 			X.append(X_val)
 			if visualize:
-				plt.subplot(3,1,3)
+				plt.subplot(num_plot,1,3)
 				plt.imshow(X_val.T, interpolation='nearest', aspect='auto')
 				# plt.axis('off')
 				# plt.title('Preprocessed data')
@@ -178,7 +181,7 @@ def preprocess_dataset(source_path, VERBOSE=False, visualize=False):
 
 			Y.append(y_val.astype('int32'))
 			if visualize:
-				plt.subplot(3,1,2)
+				plt.subplot(num_plot,1,2)
 				plt.imshow((y_val.T, ), aspect='auto')
 
 				plt.ylabel('Lables')
@@ -195,7 +198,8 @@ def preprocess_dataset(source_path, VERBOSE=False, visualize=False):
 			if visualize:
 				plt.subplots_adjust(hspace=0.01)
 				plt.tight_layout()
-				plt.show()
+				# plt.show()
+				fig.append(curr_fig)
 
 			i+=1
 			if VERBOSE:
@@ -210,7 +214,7 @@ def preprocess_dataset(source_path, VERBOSE=False, visualize=False):
 
 		if i >= debug_size and DEBUG:
 			break
-	return X, Y
+	return X, Y, fig
 
 
 
@@ -227,11 +231,13 @@ if DEBUG:
 
 print('Preprocessing data ...')
 print('  This will take a while')
-X_train_all, y_train_all 	= preprocess_dataset(train_source_path, 
-								VERBOSE=False, visualize=False)
-X_test, y_test 				= preprocess_dataset(test_source_path, 
-								VERBOSE=False, visualize=False)
+X_train_all, y_train_all, train_fig 	= preprocess_dataset(train_source_path, 
+											VERBOSE=False, visualize=False)
+X_test, y_test, train_fig 				= preprocess_dataset(test_source_path, 
+											VERBOSE=False, visualize=True)
 print('  Preprocessing complete')
+
+
 
 if VERBOSE:
 	print()
