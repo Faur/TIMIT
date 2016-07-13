@@ -265,34 +265,53 @@ if VERBOSE:
 	print(len(X_test))
 	print(len(y_test))
 
+if VERBOSE:
+	print()
+	print('Type of train')
+	print(type(X_train))
+	print(type(y_train))
+	print(type(X_train[0]), X_train[0].shape)
+	print(type(y_train[0]), y_train[0].shape)
 
+
+print()
 print('Normalizing data ...')
 print('    Each channel mean=0, sd=1 ...')
-total_len = 0
-mean_val = np.zeros(X_train[0].shape[1])
-std_val = np.zeros(X_train[0].shape[1])
-for obs in X_train:
-	obs_len = obs.shape[0]
-	mean_val += np.mean(obs,axis=0)*obs_len
-	std_val += np.std(obs, axis=0)*obs_len
-	total_len += obs_len
 
-if VERBOSE:
-	print(total_len)
-	print(mean_val.shape)
-	print(std_val.shape)
+def calc_norm_param(X, VERBOSE=False):
+	"""Assumes X to be a list of arrays (of differing sizes)"""
+	total_len = 0
+	mean_val = np.zeros(X[0].shape[1])
+	std_val = np.zeros(X[0].shape[1])
+	for obs in X:
+		obs_len = obs.shape[0]
+		print('len', obs_len)
+		mean_val += np.mean(obs,axis=0)*obs_len
+		std_val += np.std(obs, axis=0)*obs_len
+		total_len += obs_len
+	
+	print('total len', total_len)
+	mean_val /= total_len
+	std_val /= total_len
 
-for i in range(len(X_train)):
-	X_train[i] = ((X_train[i] - mean_val)/std_val)
-	X_train[i] = X_train[i].astype(data_type)
+	if VERBOSE:
+		print(total_len)
+		print(mean_val.shape)
+		print('  {}'.format(mean_val))
+		print(std_val.shape)
+		print('  {}'.format(std_val))
 
-for i in range(len(X_val)):
-	X_val[i] = (X_val[i] - mean_val)/std_val
-	X_val[i] = X_val[i].astype(data_type)
+	return mean_val, std_val, total_len
 
-for i in range(len(X_test)):
-	X_test[i] = (X_test[i] - mean_val)/std_val
-	X_test[i] = X_test[i].astype(data_type)
+def normalize(X, mean_val, std_val):
+	return (X - mean_val)/std_val
+
+
+mean_val, std_val, _ = calc_norm_param(X_train)
+
+X_train = normalize(X_train, mean_val, std_val)
+X_val 	= normalize(X_val, mean_val, std_val)
+X_test 	= normalize(X_test, mean_val, std_val)
 
 print('Saving data ...')
 with open(target_path + '.pkl', 'wb') as cPickle_file:
