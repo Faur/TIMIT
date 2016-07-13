@@ -1,23 +1,26 @@
-import time; program_start_time = time.time()
 import os
-import random
+import wave
+import timeit; program_start_time = timeit.default_timer()
+import random; random.seed(int(timeit.default_timer()))
+from six.moves import cPickle 
+
 import numpy as np
 import scipy.io.wavfile as wav
+import matplotlib.pyplot as plt
 
-from six.moves import cPickle
-
+from general_tools import *
 import features
 	# https://github.com/jameslyons/python_speech_features
-from general_tools import *
 
 
 
 
 ##### SCRIPT META VARIABLES #####
-VERBOSE = False
+VERBOSE = True
 DEBUG 	= True
 debug_size = 15
 	# Convert only a reduced dataset
+
 ##### SCRIPT VARIABLES #####
 train_size = 3696
 val_size = 184
@@ -40,6 +43,8 @@ if DEBUG:
 	target_path += '_DEBUG'
 else:
 	print('DEBUG mode: \tDEACTIVE')
+
+
 
 
 phonemes = ["b", "bcl", "d", "dcl", "g", "gcl", "p", "pcl", "t", "tcl", "k", "kcl", "dx", "q", "jh", "ch", "s", "sh", "z", "zh", 
@@ -83,7 +88,7 @@ def create_mfcc(method, filename):
 
 	return out, out.shape[0]
 
-def preprocess_dataset(source_path):
+def preprocess_dataset(source_path, VERBOSE=False, visualize=False):
 	"""Preprocess data, ignoring compressed files and files starting with 'SA'"""
 	i = 0
 	X = []
@@ -100,12 +105,58 @@ def preprocess_dataset(source_path):
 			total_duration = get_total_duration(phn_fname)
 			fr = open(phn_fname)
 
+
+			if visualize:
+				wav_file 	= wave.open(wav_fname, 'r')
+				signal 		= wav_file.readframes(-1)
+				signal 		= np.fromstring(signal, 'Int16')
+				frame_rate 	= wav_file.getframerate()
+
+				if wav_file.getnchannels() == 2:
+					print('ONLY MONO FILES')
+
+				x_axis 	= np.linspace(0, len(signal)/frame_rate, num=len(signal))
+				ax1 	= plt.subplot(3,1,1)
+				# plt.title('Original wave data')
+				plt.plot(x_axis, signal)
+				ax1.set_xlim([0, len(signal)/frame_rate])
+
+				plt.ylabel('Original wave data')
+				plt.tick_params(
+					axis='both',       	# changes apply to the axis
+					which='both',      	# both major and minor ticks are affected
+					bottom='off',      	# ticks along the bottom 
+					top='off',         	# ticks along the top 
+					right='off',      	# ticks along the right 
+					left='off',      	# ticks along the left
+					labelbottom='off', 	# labels along the bottom
+					labelleft='off')		# labels along the top
+
+				# plt.gca().axes.get_xaxis().set_visible(False)
+
+
 			X_val, total_frames = create_mfcc('DUMMY', wav_fname)
 			X_val = X_val.astype(data_type)
 			total_frames = int(total_frames)
 
-
 			X.append(X_val)
+			if visualize:
+				plt.subplot(3,1,3)
+				plt.imshow(X_val.T, interpolation='nearest', aspect='auto')
+				# plt.axis('off')
+				# plt.title('Preprocessed data')
+
+				plt.ylabel('Preprocessed data')
+				plt.tick_params(
+					axis='both',       	# changes apply to the axis
+					which='both',      	# both major and minor ticks are affected
+					bottom='off',      	# ticks along the bottom 
+					top='off',         	# ticks along the top 
+					right='off',      	# ticks along the right 
+					left='off',      	# ticks along the left
+					labelbottom='off', 	# labels along the bottom
+					labelleft='off')		# labels along the top
+
 
 			y_val = np.zeros(total_frames) - 1
 			start_ind = 0
@@ -124,9 +175,28 @@ def preprocess_dataset(source_path):
 			if -1 in y_val:
 				print('WARNING: -1 detected in TARGET')
 				print(y_val)
-			Y.append(y_val.astype('int32'))
 
-			# if VERBOSE:
+			Y.append(y_val.astype('int32'))
+			if visualize:
+				plt.subplot(3,1,2)
+				plt.imshow((y_val.T, ), aspect='auto')
+
+				plt.ylabel('Lables')
+				plt.tick_params(
+					axis='both',       	# changes apply to the axis
+					which='both',      	# both major and minor ticks are affected
+					bottom='off',      	# ticks along the bottom 
+					top='off',         	# ticks along the top 
+					right='off',      	# ticks along the right 
+					left='off',      	# ticks along the left
+					labelbottom='off', 	# labels along the bottom
+					labelleft='off')		# labels along the top
+
+			if visualize:
+				plt.subplots_adjust(hspace=0.01)
+				plt.tight_layout()
+				plt.show()
+
 			i+=1
 			if VERBOSE:
 				print()
@@ -134,8 +204,6 @@ def preprocess_dataset(source_path):
 				print('type(X_val): \t\t {}'.format(type(X_val)))
 				print('X_val.shape: \t\t {}'.format(X_val.shape))
 				print('type(X_val[0][0]):\t {}'.format(type(X_val[0][0])))
-			else:
-				print(i)
 
 			if i >= debug_size and DEBUG:
 				break
@@ -159,8 +227,10 @@ if DEBUG:
 
 print('Preprocessing data ...')
 print('  This will take a while')
-X_train_all, y_train_all 	= preprocess_dataset(train_source_path)
-X_test, y_test 				= preprocess_dataset(test_source_path)
+X_train_all, y_train_all 	= preprocess_dataset(train_source_path, 
+								VERBOSE=False, visualize=False)
+X_test, y_test 				= preprocess_dataset(test_source_path, 
+								VERBOSE=False, visualize=False)
 print('  Preprocessing complete')
 
 if VERBOSE:
@@ -234,7 +304,9 @@ with open(target_path + '.pkl', 'wb') as cPickle_file:
 print('Preprocessing complete!')
 print()
 
-print('Total time: {:.3f}'.format(time.time() - program_start_time))
+
+
+print('Total time: {:.3f}'.format(timeit.default_timer() - program_start_time))
 
 
 
