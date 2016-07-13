@@ -15,7 +15,7 @@ import features
 
 ##### SCRIPT META VARIABLES #####
 VERBOSE = True
-DEBUG 	= False
+DEBUG 	= True
 debug_size = 5
 	# Convert only a reduced dataset
 visualize = False
@@ -116,6 +116,11 @@ def normalize(X, mean_val, std_val):
 		X[i] = (X[i] - mean_val)/std_val
 	return X
 
+def set_type(X, type):
+	for i in range(len(X)):
+		X[i] = X[i].astype(type)
+	return X
+
 
 def preprocess_dataset(source_path, VERBOSE=False, visualize=False):
 	"""Preprocess data, ignoring compressed files and files starting with 'SA'"""
@@ -168,7 +173,6 @@ def preprocess_dataset(source_path, VERBOSE=False, visualize=False):
 
 
 			X_val, total_frames = create_mfcc('DUMMY', wav_fname)
-			X_val = X_val.astype(data_type)
 			total_frames = int(total_frames)
 
 			X.append(X_val)
@@ -320,6 +324,10 @@ mean_val, std_val, _ = calc_norm_param(X_train)
 X_train = normalize(X_train, mean_val, std_val)
 X_val 	= normalize(X_val, mean_val, std_val)
 X_test 	= normalize(X_test, mean_val, std_val)
+
+X_train = set_type(X_train, data_type)
+X_val 	= set_type(X_val, data_type)
+X_test 	= set_type(X_test, data_type)
 
 if visualize == True:
 	for i in range(debug_size):
