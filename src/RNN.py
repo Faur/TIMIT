@@ -24,25 +24,20 @@ comput_confusion = False
 paths = path_reader('path_toke.txt')
 output_path = os.path.join('..', 'output')
 
-if 0:
-	data_path = os.path.join(paths[0], 'logfbank_39.pkl')
-	model_save = os.path.join(output_path, 'best_model_old_data')
-	model_load = os.path.join(output_path, 'best_model_old_data.npz')
-	INPUT_SIZE 		= 39
-elif 0:
-	data_path = os.path.join(paths[0], 'std_preprocess_26_ch.pkl')
-	model_load = os.path.join(output_path, 'best_model.npz')
-	model_save = os.path.join(output_path, 'best_model')
-	INPUT_SIZE 		= 26
+if 1:
+	data_path 	= os.path.join(paths[0], 'std_preprocess_26_ch.pkl')
+	model_load 	= os.path.join(output_path, 'best_model.npz')
+	model_save 	= os.path.join(output_path, 'best_model')
+	INPUT_SIZE 	= 26
 else:
-	data_path = os.path.join(paths[0], 'std_preprocess_26_ch_DEBUG.pkl')
-	model_load = os.path.join(output_path, 'best_model_DEBUG.npz')
-	model_save = os.path.join(output_path, 'best_model_DEBUG')
-	INPUT_SIZE 		= 26
+	data_path 	= os.path.join(paths[0], 'std_preprocess_26_ch_DEBUG.pkl')
+	model_load 	= os.path.join(output_path, 'best_model_DEBUG.npz')
+	model_save 	= os.path.join(output_path, 'best_model_DEBUG')
+	INPUT_SIZE 	= 26
 	print('DEBUG MODE ACTIVE: Only a reduced dataset is used.')
 
 ##### SCRIPT VARIABLES #####
-num_epochs 		= 10
+num_epochs 		= 20
 
 NUM_OUTPUT_UNITS= 61
 N_HIDDEN 		= 275
@@ -58,6 +53,7 @@ print('\tdata source: '+ data_path)
 print('\tmodel target: '+ model_save + '.npz')
 dataset = load_dataset(data_path)
 X_train, y_train, X_val, y_val, X_test, y_test = dataset
+
 
 ##### BUIDING MODEL #####
 print(' * Building network ...')
@@ -76,10 +72,6 @@ print(" * Training ...")
 RNN_network.train(dataset, model_save, num_epochs=num_epochs, 
 	batch_size=batch_size, comput_confusion=False, debug=False)
 
-RNN_network.use_best_param()
-
-RNN_network.train(dataset, model_save, num_epochs=num_epochs * 2, 
-	batch_size=batch_size, comput_confusion=False, debug=False)
 
 print()
 print(" * Done")
