@@ -88,6 +88,37 @@ def create_mfcc(method, filename):
 
 	return out, out.shape[0]
 
+def calc_norm_param(X, VERBOSE=False):
+	"""Assumes X to be a list of arrays (of differing sizes)"""
+	total_len = 0
+	mean_val = np.zeros(X[0].shape[1])
+	std_val = np.zeros(X[0].shape[1])
+	for obs in X:
+		obs_len = obs.shape[0]
+		print('len', obs_len)
+		mean_val += np.mean(obs,axis=0)*obs_len
+		std_val += np.std(obs, axis=0)*obs_len
+		total_len += obs_len
+	
+	print('total len', total_len)
+	mean_val /= total_len
+	std_val /= total_len
+
+	if VERBOSE:
+		print(total_len)
+		print(mean_val.shape)
+		print('  {}'.format(mean_val))
+		print(std_val.shape)
+		print('  {}'.format(std_val))
+
+	return mean_val, std_val, total_len
+
+def normalize(X, mean_val, std_val):
+	for i in range(len(X)):
+		X[i] = (X[i] - mean_val)/std_val
+	return X
+
+
 def preprocess_dataset(source_path, VERBOSE=False, visualize=False):
 	"""Preprocess data, ignoring compressed files and files starting with 'SA'"""
 	i = 0
@@ -283,37 +314,6 @@ if VERBOSE:
 print()
 print('Normalizing data ...')
 print('    Each channel mean=0, sd=1 ...')
-
-def calc_norm_param(X, VERBOSE=False):
-	"""Assumes X to be a list of arrays (of differing sizes)"""
-	total_len = 0
-	mean_val = np.zeros(X[0].shape[1])
-	std_val = np.zeros(X[0].shape[1])
-	for obs in X:
-		obs_len = obs.shape[0]
-		print('len', obs_len)
-		mean_val += np.mean(obs,axis=0)*obs_len
-		std_val += np.std(obs, axis=0)*obs_len
-		total_len += obs_len
-	
-	print('total len', total_len)
-	mean_val /= total_len
-	std_val /= total_len
-
-	if VERBOSE:
-		print(total_len)
-		print(mean_val.shape)
-		print('  {}'.format(mean_val))
-		print(std_val.shape)
-		print('  {}'.format(std_val))
-
-	return mean_val, std_val, total_len
-
-def normalize(X, mean_val, std_val):
-	for i in range(len(X)):
-		X[i] = (X[i] - mean_val)/std_val
-	return X
-
 
 mean_val, std_val, _ = calc_norm_param(X_train)
 
